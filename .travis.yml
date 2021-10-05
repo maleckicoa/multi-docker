@@ -1,0 +1,24 @@
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t maleckicoa/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true maleckicoa/react-test npm test
+
+after_success:
+  - docker build -t maleckicoa/multi-client ./client
+  - docker build -t maleckicoa/multi-nginx ./nginx
+  - docker build -t maleckicoa/multi-server ./server
+  - docker build -t maleckicoa/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push maleckicoa/multi-client
+  - docker push maleckicoa/multi-nginx
+  - docker push maleckicoa/multi-server
+  - docker push maleckicoa/multi-worker
